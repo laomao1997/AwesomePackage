@@ -11,37 +11,35 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.Composable
-import androidx.compose.Model
-import androidx.compose.unaryPlus
-import androidx.core.view.marginBottom
-import androidx.ui.core.Text
-import androidx.ui.core.dp
-import androidx.ui.core.setContent
-import androidx.ui.foundation.VerticalScroller
-import androidx.ui.graphics.Color
-import androidx.ui.layout.*
-import androidx.ui.material.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
+import io.github.laomao1997.apack.Constant.URL_PREFIX
 import org.jetbrains.anko.*
 
 class MainActivity : AppCompatActivity(), MainContract.View {
 
-    companion object {
-        private const val URL_PREFIX = ""
-    }
 
     private lateinit var mPresenter: MainContract.Presenter
     private lateinit var vibrator: Vibrator
     private var onFirstRequest = true
 
+    var count: Int = 0
+
+    var mPackList = ArrayList<PackBean>()
+
+    private lateinit var mToolbar: Toolbar
+    private lateinit var mRecyclerView: RecyclerView
+    private lateinit var mAdapter: MainAdapter
+    private lateinit var mSwipeRefresher: SwipeRefreshLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            NewStory()
-        }
-
+        setContentView(R.layout.activity_main)
+        initView()
     }
 
     override fun onResume() {
@@ -56,20 +54,24 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     }
 
     override fun updateView(packList: ArrayList<PackBean>) {
-        DataState.count = packList.size
+        if (mSwipeRefresher.isRefreshing) {
+            mSwipeRefresher.isRefreshing = false
+        }
+        count = packList.size
         if (onFirstRequest) {
             onFirstRequest = false
         } else {
             // 当返回的数据不一样
-            if (DataState.mPackList[0].gitNumber != packList[0].gitNumber &&
-                DataState.mPackList.size != packList.size &&
+            if (mPackList[0].gitNumber != packList[0].gitNumber &&
+                mPackList[1].gitNumber == packList[1].gitNumber &&
                 !onFirstRequest
             ) {
                 sendNotification()
             }
         }
-        DataState.mPackList.clear()
-        DataState.mPackList.addAll(packList)
+        mPackList.clear()
+        mPackList.addAll(packList)
+        mAdapter.updateData(mPackList)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -101,11 +103,6 @@ class MainActivity : AppCompatActivity(), MainContract.View {
                     noButton { }
                 }.show()
             }
-            R.id.refresh -> {
-                makeToast("刷新")
-                mPresenter.getData()
-//                sendNotification()
-            }
             else -> {
             }
         }
@@ -119,6 +116,22 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     override fun onPause() {
         super.onPause()
         mPresenter.detachView()
+    }
+
+    private fun initView() {
+        mToolbar = findViewById(R.id.toolbar)
+        mSwipeRefresher = findViewById(R.id.swipe_refresh)
+        mRecyclerView = findViewById(R.id.recycle_view)
+        mAdapter = MainAdapter()
+        setSupportActionBar(mToolbar)
+        mRecyclerView.adapter = mAdapter
+        mAdapter.setData(mPackList)
+        mRecyclerView.layoutManager = LinearLayoutManager(this)
+        mAdapter.setOnDownloadClickListener(DownloadClickListenerImpl())
+        mSwipeRefresher.setOnRefreshListener {
+            makeToast("刷新")
+            mPresenter.getData()
+        }
     }
 
     private fun requestPermission() = runWithPermissions(Manifest.permission.INTERNET) {
@@ -152,11 +165,11 @@ class MainActivity : AppCompatActivity(), MainContract.View {
                     }.lparams() {
                         bottomMargin = dip(10)
                     }
-                    if (DataState.mPackList.size > 0) {
-                        textView("时间：${DataState.mPackList[0].time}")
-                        textView("分支：${DataState.mPackList[0].branchName}")
-                        textView("作者：${DataState.mPackList[0].owner}")
-                        textView("Git号：${DataState.mPackList[0].gitNumber}")
+                    if (mPackList.size > 0) {
+                        textView("时间：${mPackList[0].time}")
+                        textView("分支：${mPackList[0].branchName}")
+                        textView("作者：${mPackList[0].owner}")
+                        textView("Git号：${mPackList[0].gitNumber}")
                     }
                     padding = dip(16)
                 }
@@ -169,76 +182,17 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     }
 
     private fun downloadFirstPack() {
-        if (DataState.mPackList.size <= 0) {
+        if (mPackList.size <= 0) {
             return
         }
-        openLink("$URL_PREFIX${DataState.mPackList[0].link}")
+        longToast("开始下载 ${mPackList[0].owner} 的 ${mPackList[0].branchName} 分支下Git编号为 ${mPackList[0].gitNumber} 包")
+        openLink("$URL_PREFIX${mPackList[0].link}")
     }
 
-    @Composable
-    fun NewStory() {
-        MaterialTheme() {
-            VerticalScroller {
-                Column(crossAxisAlignment = CrossAxisAlignment.Center) {
-                    (0 until DataState.count).forEachIndexed { index, _ ->
-                        createListItem(index)
-                        Divider(color = Color.Blue, height = 1.dp)
-                    }
-                    Spacing(5.dp)
-                    Text(
-                        text = "Developed by Zhang Jinghao",
-                        style = (+themeTextStyle { body1 }).withOpacity(0.3f)
-                    )
-                    Text(
-                        text = "如有BUG及可改进之处烦请告知我以修改",
-                        style = (+themeTextStyle { body1 }).withOpacity(0.3f)
-                    )
-                    Spacing(5.dp)
-                }
-            }
+    inner class DownloadClickListenerImpl: MainAdapter.OnDownloadClickListener {
+        override fun onClick(position: Int) {
+            longToast("开始下载 ${mPackList[position].owner} 的 ${mPackList[position].branchName} 分支下Git编号为 ${mPackList[position].gitNumber} 包")
+            openLink("$URL_PREFIX${mPackList[position].link}")
         }
     }
-
-    @Composable
-    private fun createListItem(itemIndex: Int) {
-        Padding(padding = 8.dp) {
-            FlexRow(crossAxisAlignment = CrossAxisAlignment.Center) {
-                expanded(1.0f) {
-                    Column() {
-                        Text(
-                            text = DataState.mPackList[itemIndex].time,
-                            style = (+themeTextStyle { body1 }).withOpacity(0.6f)
-                        )
-                        Text(
-                            text = DataState.mPackList[itemIndex].branchName,
-                            style = +themeTextStyle { h6 }
-                        )
-                        Text(
-                            text = "Owner: ${DataState.mPackList[itemIndex].owner}",
-                            style = (+themeTextStyle { body1 }).withOpacity(0.87f)
-                        )
-                        Text(
-                            text = "Git: ${DataState.mPackList[itemIndex].gitNumber}",
-                            style = (+themeTextStyle { body2 }).withOpacity(0.6f)
-                        )
-                    }
-                }
-                inflexible {
-                    Button(
-                        "下载",
-                        style = ContainedButtonStyle(),
-                        onClick = {
-                            openLink("$URL_PREFIX${DataState.mPackList[itemIndex].link}")
-                        })
-                }
-            }
-        }
-    }
-}
-
-@Model
-object DataState {
-    var count: Int = 0
-
-    var mPackList = ArrayList<PackBean>()
 }

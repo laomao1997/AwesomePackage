@@ -1,5 +1,8 @@
 package io.github.laomao1997.apack
 
+import android.util.Log
+import io.github.laomao1997.apack.Constant.TAG
+import io.github.laomao1997.apack.Constant.URL_BETTER_PACKAGE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.anko.AnkoLogger
@@ -10,10 +13,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 
 class MainModel: MainContract.Model, AnkoLogger {
-
-    companion object{
-        private const val URL_BETTER_PACKAGE = ""
-    }
 
     private var mPackList = ArrayList<PackBean>()
 
@@ -62,9 +61,6 @@ class MainModel: MainContract.Model, AnkoLogger {
             val link = e.select("td")[7].select("a").first().attr("href")
             val pack = PackBean(owner, projectName, branchName, time, gitNumber, type, link)
             packList.add(pack)
-        }
-        for (pack in packList) {
-            println("HELLO$pack")
         }
         return packList
     }
