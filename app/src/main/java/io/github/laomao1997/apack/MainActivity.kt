@@ -13,9 +13,12 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
 import io.github.laomao1997.apack.Constant.URL_PREFIX
 import org.jetbrains.anko.*
@@ -31,10 +34,12 @@ class MainActivity : AppCompatActivity(), MainContract.View {
 
     var mPackList = ArrayList<PackBean>()
 
+    private lateinit var mMainLayout: ConstraintLayout
     private lateinit var mToolbar: Toolbar
     private lateinit var mRecyclerView: RecyclerView
     private lateinit var mAdapter: MainAdapter
     private lateinit var mSwipeRefresher: SwipeRefreshLayout
+    private lateinit var mFloatingActionButton: FloatingActionButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +61,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     override fun updateView(packList: ArrayList<PackBean>) {
         if (mSwipeRefresher.isRefreshing) {
             mSwipeRefresher.isRefreshing = false
+            makeToast("刷新成功")
         }
         count = packList.size
         if (onFirstRequest) {
@@ -119,18 +125,26 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     }
 
     private fun initView() {
+        mMainLayout = findViewById(R.id.ly_main)
         mToolbar = findViewById(R.id.toolbar)
         mSwipeRefresher = findViewById(R.id.swipe_refresh)
         mRecyclerView = findViewById(R.id.recycle_view)
+        mFloatingActionButton = findViewById(R.id.floating_action_button)
+
         mAdapter = MainAdapter()
         setSupportActionBar(mToolbar)
         mRecyclerView.adapter = mAdapter
         mAdapter.setData(mPackList)
         mRecyclerView.layoutManager = LinearLayoutManager(this)
         mAdapter.setOnDownloadClickListener(DownloadClickListenerImpl())
+
+        // 下拉加载更多
         mSwipeRefresher.setOnRefreshListener {
-            makeToast("刷新")
             mPresenter.getData()
+        }
+        // 点击返回顶部
+        mFloatingActionButton.setOnClickListener {
+            mRecyclerView.smoothScrollToPosition(0)
         }
     }
 
@@ -138,8 +152,18 @@ class MainActivity : AppCompatActivity(), MainContract.View {
         mPresenter.getData()
     }
 
+    /**
+     * 通过浏览器打开指定链接地址
+     */
     private fun openLink(link: String) {
         browse(link)
+    }
+
+    /**
+     * 在页面底端显示 SnackBar
+     */
+    private fun showSnakeBar(text: String) {
+        Snackbar.make(mMainLayout, text, Snackbar.LENGTH_LONG).show()
     }
 
     private fun sendNotification() {
@@ -191,7 +215,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
 
     inner class DownloadClickListenerImpl: MainAdapter.OnDownloadClickListener {
         override fun onClick(position: Int) {
-            longToast("开始下载 ${mPackList[position].owner} 的 ${mPackList[position].branchName} 分支下Git编号为 ${mPackList[position].gitNumber} 包")
+            showSnakeBar("开始下载 ${mPackList[position].owner} ${mPackList[position].time} 的包")
             openLink("$URL_PREFIX${mPackList[position].link}")
         }
     }

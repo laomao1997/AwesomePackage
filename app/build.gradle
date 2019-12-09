@@ -62,7 +62,7 @@ dependencies {
     implementation 'com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2'
 
     // RecyclerView
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
     // Jsoup
     implementation 'org.jsoup:jsoup:1.12.1'
@@ -70,4 +70,7 @@ dependencies {
 
     // QuickPermissions
     implementation 'com.github.quickpermissions:quickpermissions-kotlin:0.4.0'
+
+    // Material Design
+    implementation 'com.google.android.material:material:1.0.0'
 }

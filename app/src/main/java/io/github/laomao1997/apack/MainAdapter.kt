@@ -42,7 +42,7 @@ class MainAdapter: RecyclerView.Adapter<PackViewHolder>() {
         holder.tvOwner.text = mPackList[position].owner
         holder.tvGit.text = mPackList[position].gitNumber
 
-        holder.btnDownload.setOnClickListener {
+        holder.ivDownload.setOnClickListener {
             mDownloadClickListener.onClick(position)
         }
     }
