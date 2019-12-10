@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">APack</string>
     <string name="download">下载</string>
+    <string name="tips">已经到底了\n发现BUG及可改进之处请联系\n⭐️zhanjinghao@myhexin.com</string>
+    <string name="owner">owner</string>
+    <string name="git">git</string>
 </resources>

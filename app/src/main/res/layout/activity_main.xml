@@ -3,16 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/ly_main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Awesome Package"
+        app:logo="@drawable/icon_horizontal"
         app:titleTextColor="@android:color/white" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

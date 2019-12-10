@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorWhite"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
@@ -10,7 +9,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="18sp"
-        android:textColor="#000000"
+        android:textColor="@color/colorAccent"
+        android:textStyle="bold"
         android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -22,7 +22,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="15sp"
-        android:textColor="#707070"
+        android:textColor="@color/colorWhite"
         app:layout_constraintLeft_toLeftOf="@id/tv_branch"
         app:layout_constraintRight_toLeftOf="@+id/iv_download"
         app:layout_constraintTop_toBottomOf="@+id/tv_branch" />
@@ -34,15 +34,19 @@
         android:src="@drawable/user"
         app:layout_constraintLeft_toLeftOf="@id/tv_time"
         app:layout_constraintTop_toTopOf="@+id/tv_owner"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_owner"/>
+        app:layout_constraintBottom_toBottomOf="@+id/tv_owner"
+        android:contentDescription="@string/owner" />
 
     <TextView
         android:id="@+id/tv_owner"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="15sp"
-        android:textColor="#707070"
-        android:layout_marginStart="5dp"
+        android:textColor="@color/colorGray"
+        android:layout_marginStart="2dp"
+        app:layout_constraintRight_toLeftOf="@id/iv_git"
+        android:maxLines="1"
+        android:ellipsize="end"
         app:layout_constraintLeft_toRightOf="@id/iv_user"
         app:layout_constraintTop_toBottomOf="@+id/tv_time" />
 
@@ -50,11 +54,12 @@
         android:id="@+id/iv_git"
         android:layout_width="17dp"
         android:layout_height="17dp"
-        android:src="@drawable/social_github"
-        android:layout_marginEnd="5dp"
+        android:src="@drawable/git"
+        android:layout_marginEnd="2dp"
         app:layout_constraintRight_toLeftOf="@+id/tv_git"
         app:layout_constraintTop_toTopOf="@+id/tv_git"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_git"/>
+        app:layout_constraintBottom_toBottomOf="@+id/tv_git"
+        android:contentDescription="@string/git" />
 
     <TextView
         android:id="@+id/tv_git"
@@ -62,7 +67,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:textSize="15sp"
-        android:textColor="#707070"
+        android:textColor="@color/colorGray"
         android:gravity="end"
         android:typeface="monospace"
         app:layout_constraintRight_toLeftOf="@+id/iv_download"
@@ -78,7 +83,7 @@
         android:paddingEnd="25dp"
         android:text="@string/download"
         android:textColor="@color/colorWhite"
-        android:background="?attr/selectableItemBackground"
+        android:background="@drawable/ripple"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"

@@ -1,14 +1,15 @@
 package io.github.laomao1997.apack
 
 import android.Manifest
+import android.app.DownloadManager
+import android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
 import android.app.Service
 import android.content.Context
-import android.os.Build
-import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
+import android.net.Uri
+import android.os.*
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
@@ -20,6 +21,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
+import io.github.laomao1997.apack.Constant.DIR_PATH
 import io.github.laomao1997.apack.Constant.URL_PREFIX
 import org.jetbrains.anko.*
 
@@ -30,9 +32,9 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     private lateinit var vibrator: Vibrator
     private var onFirstRequest = true
 
-    var count: Int = 0
+    private var count: Int = 0
 
-    var mPackList = ArrayList<PackBean>()
+    private var mPackList = ArrayList<PackBean>()
 
     private lateinit var mMainLayout: ConstraintLayout
     private lateinit var mToolbar: Toolbar
@@ -44,6 +46,8 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // 初始化界面
         initView()
     }
 
@@ -51,7 +55,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
         super.onResume()
         mPresenter = MainPresenter()
         mPresenter.attachView(this)
-        requestPermission()
+        requestInternetPermission()
     }
 
     override fun makeToast(msg: String) {
@@ -61,7 +65,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
     override fun updateView(packList: ArrayList<PackBean>) {
         if (mSwipeRefresher.isRefreshing) {
             mSwipeRefresher.isRefreshing = false
-            makeToast("刷新成功")
+            showSnakeBar("刷新成功")
         }
         count = packList.size
         if (onFirstRequest) {
@@ -134,7 +138,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
         mAdapter = MainAdapter()
         setSupportActionBar(mToolbar)
         mRecyclerView.adapter = mAdapter
-        mAdapter.setData(mPackList)
+        mAdapter.setData(getContext(), mPackList)
         mRecyclerView.layoutManager = LinearLayoutManager(this)
         mAdapter.setOnDownloadClickListener(DownloadClickListenerImpl())
 
@@ -148,7 +152,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
         }
     }
 
-    private fun requestPermission() = runWithPermissions(Manifest.permission.INTERNET) {
+    private fun requestInternetPermission() = runWithPermissions(Manifest.permission.INTERNET) {
         mPresenter.getData()
     }
 
@@ -186,7 +190,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
                     textView("有新包") {
                         textSize = sp(8).toFloat()
                         textColor = android.graphics.Color.BLACK
-                    }.lparams() {
+                    }.lparams {
                         bottomMargin = dip(10)
                     }
                     if (mPackList.size > 0) {
@@ -201,7 +205,7 @@ class MainActivity : AppCompatActivity(), MainContract.View {
             positiveButton("立即下载") {
                 downloadFirstPack()
             }
-            noButton {  }
+            noButton { }
         }.show()
     }
 
@@ -213,10 +217,37 @@ class MainActivity : AppCompatActivity(), MainContract.View {
         openLink("$URL_PREFIX${mPackList[0].link}")
     }
 
-    inner class DownloadClickListenerImpl: MainAdapter.OnDownloadClickListener {
+    private fun download(position: Int) =
+        runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+            val downloadManager: DownloadManager =
+                getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            val request: DownloadManager.Request =
+                DownloadManager.Request(Uri.parse("$URL_PREFIX${mPackList[position].link}"))
+            val fileName = getFileName(position)
+            // 设置下载路径
+            request.setDestinationInExternalFilesDir( this , Environment.DIRECTORY_DOWNLOADS ,  fileName );
+            // 指定在WIFI状态下，执行下载操作。
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
+            // 设置Notification的标题和描述
+            request.setTitle(fileName)
+            request.setDescription("下载中")
+            //设置Notification的显示，和隐藏。
+            request.setNotificationVisibility(VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            // 设置下载文件类型
+            request.setMimeType("application/vnd.android.package-archive");
+            val id: Long = downloadManager.enqueue(request)
+        }
+
+    private fun getFileName(position: Int): String {
+        val lastIndexOfClash = mPackList[position].link.lastIndexOf('/')
+        return mPackList[position].link.substring(lastIndexOfClash + 1)
+    }
+
+    inner class DownloadClickListenerImpl : MainAdapter.OnDownloadClickListener {
         override fun onClick(position: Int) {
-            showSnakeBar("开始下载 ${mPackList[position].owner} ${mPackList[position].time} 的包")
-            openLink("$URL_PREFIX${mPackList[position].link}")
+            showSnakeBar("开始下载 ${mPackList[position].owner} 的 ${getFileName(position)} 包")
+//            openLink("$URL_PREFIX${mPackList[position].link}")
+            download(position)
         }
     }
 }
